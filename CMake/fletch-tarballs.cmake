@@ -194,7 +194,6 @@ list(APPEND fletch_external_sources GFlags)
 
 #OpenBLAS
 if(NOT WIN32)
-  #set(OpenBLAS_version "0.2.15")
   set(OpenBLAS_version "0.2.20")
   set(OpenBLAS_url "https://github.com/xianyi/OpenBLAS/archive/v${OpenBLAS_version}.tar.gz")
 
@@ -269,13 +268,38 @@ set(libkml_md5 "a232dfd4eb07489768b207d88b983267")
 list(APPEND fletch_external_sources libkml)
 
 # Qt
-set(Qt_release_location official_releases) # official_releases or archive
-set(Qt_version_major 4)
-set(Qt_version_minor 8)
-set(Qt_patch_version 6)
-set(Qt_version ${Qt_version_major}.${Qt_version_minor}.${Qt_patch_version})
-set(Qt_url "http://download.qt-project.org/${Qt_release_location}/qt/${Qt_version_major}.${Qt_version_minor}/${Qt_version}/qt-everywhere-opensource-src-${Qt_version}.tar.gz")
-set(Qt_md5 "2edbe4d6c2eff33ef91732602f3518eb")
+
+if (fletch_ENABLE_Qt OR fletch_ENABLE_ALL_PACKAGES)
+  set(Qt_release_location official_releases) # official_releases or archive
+
+  # Support the stable version 4.8.6, and work on updating to next version 5.9.0
+  set(Qt_version_major 4)
+  set(Qt_version_minor 8)
+  set(Qt_patch_version 6)
+  set(Qt_version ${Qt_version_major}.${Qt_version_minor}.${Qt_patch_version})
+  set(Qt_SELECT_VERSION ${Qt_version} CACHE STRING "Select the version of Qt to build.")
+  set_property(CACHE Qt_SELECT_VERSION PROPERTY STRINGS 4.8.6 5.9.0)
+
+  if (Qt_SELECT_VERSION VERSION_EQUAL 5.9.0)
+    set(Qt_version_major 5)
+    set(Qt_version_minor 9)
+    set(Qt_patch_version 0)
+    set(Qt_version ${Qt_version_major}.${Qt_version_minor}.${Qt_patch_version})
+    set(Qt_url "https://download.qt-project.org/${Qt_release_location}/qt/${Qt_version_major}.${Qt_version_minor}/${Qt_version}/single/qt-everywhere-opensource-src-${Qt_version}.tar.xz")
+    set(Qt_md5 "9c8bc8b828c2b56721980368266df9d9")  # v5.9.0
+  elseif (Qt_SELECT_VERSION VERSION_EQUAL 4.8.6)
+    set(Qt_version_major 4)
+    set(Qt_version_minor 8)
+    set(Qt_patch_version 6)
+    set(Qt_version ${Qt_version_major}.${Qt_version_minor}.${Qt_patch_version})
+    set(Qt_url "https://download.qt-project.org/${Qt_release_location}/qt/${Qt_version_major}.${Qt_version_minor}/${Qt_version}/qt-everywhere-opensource-src-${Qt_version}.tar.gz")
+    set(Qt_md5 "2edbe4d6c2eff33ef91732602f3518eb")  # v4.8.6
+  elseif (fletch_ENABLE_Qt OR fletch_ENABLE_ALL_PACKAGES)
+    message(ERROR "Qt Version ${Qt_SELECT_VERSION} Not Supported")
+  endif()
+endif()
+
+
 list(APPEND fletch_external_sources Qt)
 
 # PROJ.4

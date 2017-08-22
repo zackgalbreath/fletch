@@ -145,17 +145,22 @@ else()
   endif()
 endif()
 
+
+if (Qt_version VERSION_EQUAL 4.8.6)
+  set(qt_config_version -nomake demos -nomake translations -nomake linguist -fast ${Qt_args_webkit})
+elseif()
+  set(qt_config_version -skip qtwebkit -skip javascript-jit)
+endif()
+
 set(Qt_configure ${Qt_configure}
   -prefix ${fletch_BUILD_INSTALL_PREFIX}
   -docdir ${fletch_BUILD_INSTALL_PREFIX}/share/doc/qt4-${Qt_version}
   -datadir ${fletch_BUILD_INSTALL_PREFIX}/lib/qt4
   -plugindir ${fletch_BUILD_INSTALL_PREFIX}/lib/qt4/plugins
   -importdir ${fletch_BUILD_INSTALL_PREFIX}/lib/qt4/imports
-  -opensource -confirm-license -fast
-  -nomake examples -nomake demos -nomake translations -nomake linguist
+  -opensource -confirm-license ${qt_config_version}
+  -nomake examples
   ${Qt_args_build_type}
-  ${Qt_args_webkit}
-  ${Qt_args_javascriptjit}
   ${Qt_args_arch}
   ${Qt_args_jpeg}
   ${Qt_args_zlib}
@@ -169,6 +174,20 @@ if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -platform unsupported/macx-clang )
 endif()
 
+
+# If a patch file exists for this version, apply it
+set (Qt_patch ${fletch_SOURCE_DIR}/Patches/Qt/${Qt_version})
+if (EXISTS ${Qt_patch})
+  set(Qt_PATCH_COMMAND ${CMAKE_COMMAND}
+    -DQt_CFLAGS:STRING=${CMAKE_C_FLAGS}
+    -DQt_CXXFLAGS:STRING=${CMAKE_CXX_FLAGS}
+    -DQt_patch:PATH=${Qt_patch}
+    -DQt_source:PATH=${fletch_BUILD_PREFIX}/src/Qt
+    -DQt_install:PATH=${fletch_BUILD_INSTALL_PREFIX}
+    -P ${Qt_patch}/Patch.cmake
+    )
+endif()
+
 ExternalProject_Add(Qt
   DEPENDS ${Qt_DEPENDS}
   URL ${Qt_file}
@@ -177,13 +196,7 @@ ExternalProject_Add(Qt
   DOWNLOAD_DIR ${fletch_DOWNLOAD_DIR}
   INSTALL_DIR ${fletch_BUILD_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
-  PATCH_COMMAND ${CMAKE_COMMAND}
-  -DQt_CFLAGS:STRING=${CMAKE_C_FLAGS}
-  -DQt_CXXFLAGS:STRING=${CMAKE_CXX_FLAGS}
-  -DQt_patch:PATH=${fletch_SOURCE_DIR}/Patches/Qt
-  -DQt_source:PATH=${fletch_BUILD_PREFIX}/src/Qt
-  -DQt_install:PATH=${fletch_BUILD_INSTALL_PREFIX}
-  -P ${fletch_SOURCE_DIR}/Patches/Qt/Patch.cmake
+  PATCH_COMMAND ${Qt_PATCH_COMMAND}
   CONFIGURE_COMMAND ${Qt_configure}
   BUILD_COMMAND ${Qt_build}
   INSTALL_COMMAND ${Qt_install_cmd}
